@@ -6,6 +6,7 @@ package gin
 
 import (
 	"bytes"
+	"fmt"
 	"net/url"
 	"strings"
 	"unicode"
@@ -91,10 +92,10 @@ func countParams(path string) uint16 {
 type nodeType uint8
 
 const (
-	static nodeType = iota // default
-	root
-	param
-	catchAll
+	static   nodeType = iota // default，普通节点
+	root                     //根节点
+	param                    //:参数节点
+	catchAll                 //最后*好结尾的是这个
 )
 
 type node struct {
@@ -109,6 +110,7 @@ type node struct {
 }
 
 // Increments priority of the given child and reorders if necessary
+//说明是降序排列
 func (n *node) incrementChildPrio(pos int) int {
 	cs := n.children
 	cs[pos].priority++
@@ -315,7 +317,10 @@ func (n *node) insertChild(path string, fullPath string, handlers HandlersChain)
 				fullPath: fullPath,
 			}
 			n.children = []*node{child}
+			fmt.Printf("%+v\n", n)
 			n = child
+			fmt.Printf("%+v\n", n)
+
 			n.priority++
 
 			// if the path doesn't end with the wildcard, then there
@@ -337,8 +342,9 @@ func (n *node) insertChild(path string, fullPath string, handlers HandlersChain)
 			return
 		}
 
+		fmt.Println(wildcard, i, path)
 		// catchAll
-		if i+len(wildcard) != len(path) {
+		if i+len(wildcard) != len(path) { //相当于匹配到*，但是*必须是最后一个
 			panic("catch-all routes are only allowed at the end of the path in path '" + fullPath + "'")
 		}
 
@@ -363,7 +369,10 @@ func (n *node) insertChild(path string, fullPath string, handlers HandlersChain)
 
 		n.children = []*node{child}
 		n.indices = string('/')
+		fmt.Printf("%+v\n", n)
 		n = child
+		fmt.Printf("%+v\n", n)
+
 		n.priority++
 
 		// second node: node holding the variable
